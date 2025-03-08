@@ -35,3 +35,4 @@ app.mount('#app')
 
 //ADICIONADO GIT FLOW
 //FEATURE CSS -- TESTADO OK!
+//Hotfix corrigido
