@@ -1,0 +1,49 @@
+name: Jira Git Flow Automation
+on:
+  repository_dispatch:
+    types: [start-feature]
+jobs:
+  start_feature:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Necessário para o Git Flow
+
+      - name: Setup Git Flow
+        run: |
+          sudo apt-get install -y git-flow
+          git flow init -d
+
+      - name: Start feature branch
+        run: git flow feature start ${{ github.event.client_payload.issue_key }}
+
+      - name: Push feature branch
+        run: |
+          git push origin develop
+          git push origin feature/${{ github.event.client_payload.issue_key }}
+
+      - name: Jira Feedback
+        run: |
+          curl -X POST \
+          -H "Authorization: Bearer ${{ secrets.JIRA_API_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          "https://fatecbdsjc.atlassian.net/rest/api/3/issue/${{ github.event.client_payload.issue_key }}/comment" \
+          -d '{
+            "body": {
+              "type": "doc",
+              "version": 1,
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Branch feature/${{ github.event.client_payload.issue_key }} criada automaticamente."
+                    }
+                  ]
+                }
+              ]
+            }
+          }'
